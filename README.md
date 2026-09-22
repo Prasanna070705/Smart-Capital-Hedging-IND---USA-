@@ -113,3 +113,32 @@ regimes predict next-6-month risk (table above); 35 tests pass.
 - K-Means labels each day independently: 6.3 regime changes per year, no persistence (an HMM would model it).
 - COVID (Mar-May 2020) reads mostly Normal: RBI intervention held rupee volatility near 10%.
 - The scaler and clusters are fit on all 2000-2026 data; the backtest refits on past data only.
+
+
+## Objective 4a: Regime-Aware Hedge Recommendation
+
+Recommended share of a 6-month USD payment to hedge with the forward (2026-09-18 snapshot, today's regime: Calm):
+
+| Risk tolerance | Bad-case limit (VaR 95%, % of cost) | Calm | Normal | Crisis |
+|---|---|---|---|---|
+| Very cautious | 1.0% | 100% | 100% | 100% |
+| Cautious | 2.5% | 75% | 80% | 85% |
+| Balanced | 4.0% | 50% | 60% | 75% |
+| Relaxed | 6.0% | 20% | 35% | 55% |
+| Very relaxed | 9.0% | 0% | 0% | 30% |
+
+**Method:** block bootstrap where each 10-day block comes from days in the path's current regime, with regimes
+switching by historical 10-day transition probabilities; paths centred on the CIP forward; the recommendation is
+the smallest hedge ratio (5% steps) whose VaR 95% fits the buyer's limit.
+
+**Deviation from plan:** Cost + lambda x VaR is linear in the hedge ratio (both terms mix linearly), so it only ever
+picks 0% or 100%; with the simulation's historical drift (1.6% vs a 0.78% premium) it always picked 100%, failing
+the plan's sanity check. The risk-budget rule is its constrained form and gives graded answers.
+
+**Validation:** regime simulation reproduces Objective 1's VaR (9.29% vs 9.20%); unhedged VaR rises Calm 7.2% ->
+Normal 8.6% -> Crisis 12.2%; recommendations never fall as the regime worsens or tolerance tightens; 45 tests pass.
+
+**Known limitations:**
+- Centring on the forward assumes it is an unbiased forecast (supported by the Day 6 history check, not guaranteed).
+- The simulation understates risk after Normal days (8.6% vs 14.2% actually observed), because Normal often preceded crises.
+- No bank spread is included, and the risk levels (1-9%) are a design choice, not estimated from data.

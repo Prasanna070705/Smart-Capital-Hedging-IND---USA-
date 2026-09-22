@@ -80,3 +80,19 @@ KMEANS_N_INIT = 10                      # K-Means restarts; the best of 10 is ke
 KMEANS_FILE = MODELS_DIR / "kmeans_v1.pkl"
 REGIME_LABELS_FILE = OUTPUTS_DIR / "regime_labels.csv"
 K_SELECTION_FILE = OUTPUTS_DIR / "regime_k_selection.csv"
+
+
+# ---- Objective 4a: regime-aware hedge recommendation (Day 10) ----
+UTILITY_SCORES_FILE = OUTPUTS_DIR / "utility_scores.csv"
+CANDIDATES_FILE = OUTPUTS_DIR / "candidates_today.csv"
+RATIO_GRID = [round(0.05 * i, 2) for i in range(21)]   # 0%, 5%, ..., 100%
+
+# Risk tolerance = the most extra cost the buyer can absorb in a 1-in-20 bad case (VaR 95%),
+# as % of today's cost. The recommendation is the SMALLEST hedge that keeps VaR within it.
+RISK_LEVELS = {
+    "Very cautious": 1.0,
+    "Cautious":      2.5,
+    "Balanced":      4.0,
+    "Relaxed":       6.0,
+    "Very relaxed":  9.0,
+}
