@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 
 from config import (RAW_DIR, PROCESSED_DIR, MASTER_FILE, TRADING_DAYS_PER_YEAR,
-                    VOL_WINDOWS, MACRO_LAG_MONTHS, MACRO_MAX_STALE_DAYS)
+                    VOL_WINDOWS, MACRO_LAG_MONTHS, MACRO_MAX_STALE_DAYS, FRED_SERIES)
 
-MONTHLY_SERIES = ["us_cpi", "india_cpi", "us_interest_rate", "india_interest_rate", "india_reer"]
-
+# Every series in config.py except the daily spot rate is monthly (added Day 5: picks up new series automatically)
+MONTHLY_SERIES = [name for name in FRED_SERIES if name != "usd_inr_spot"]
 
 def load_raw(name):
     """Read one raw CSV into a Series indexed by date."""
@@ -42,6 +42,11 @@ def build_monthly_macro():
     macro["india_inflation_yoy"] = macro["india_cpi"].pct_change(12, fill_method=None) * 100
     macro["inflation_diff"] = macro["india_inflation_yoy"] - macro["us_inflation_yoy"]
     macro["rate_diff"] = macro["india_interest_rate"] - macro["us_interest_rate"]
+
+    macro["rate_diff"] = macro["india_interest_rate"] - macro["us_interest_rate"]
+    if "india_tbill_rate" in macro and "us_tbill_rate" in macro:   
+        # Day 5: matching-tenor gap for CIP
+        macro["tbill_diff"] = macro["india_tbill_rate"] - macro["us_tbill_rate"]
 
     # Publication lag: January's value only becomes usable from March 1 (with a 2-month lag)
     macro.index = macro.index + pd.DateOffset(months=MACRO_LAG_MONTHS)

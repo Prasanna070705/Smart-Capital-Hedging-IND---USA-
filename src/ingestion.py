@@ -1,5 +1,6 @@
 # src/ingestion.py
 import os
+import sys
 from dotenv import load_dotenv
 from fredapi import Fred
 from config import RAW_DIR, FRED_SERIES
@@ -9,7 +10,13 @@ fred = Fred(api_key=os.getenv("FRED_API_KEY"))
 
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 
+# Optional: pass series names to fetch only those, e.g.  python src/ingestion.py us_tbill_rate india_tbill_rate
+# (keeps the other raw files, and so the training snapshot, unchanged)
+wanted = sys.argv[1:] or list(FRED_SERIES)
+
 for name, series_id in FRED_SERIES.items():
+    if name not in wanted:
+        continue
     data = fred.get_series(series_id)
     df = data.reset_index()
     df.columns = ["date", name]

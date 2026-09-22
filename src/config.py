@@ -13,6 +13,8 @@ FRED_SERIES = {
     "us_interest_rate": "FEDFUNDS",         # US effective Fed Funds rate, monthly (was INTDSRUSM193N, ended 2021-08)
     "india_interest_rate": "IRSTCI01INM156N", # India call money rate, monthly (was INTDSRINM193N, ended 2022-07)
     "india_reer": "CCRETT01INM661N",        # India real effective exchange rate, CPI-based, monthly (live substitute for India CPI)
+    "us_tbill_rate": "TB3MS",              # Day 5: US 3-month T-bill rate, monthly (matches India's 3-month tenor)
+    "india_tbill_rate": "INDIR3TIB01STM",   # Day 5: India 3-month interbank rate, monthly (OECD); no India T-bill series on FRED
 }
 
 
@@ -42,3 +44,10 @@ BLOCK_LEN = 10                   # days per bootstrap block (2 trading weeks), k
 HISTORY_START = "2000-01-01"     # sample only from the market-determined era (see walkthrough)
 CONFIDENCE = 0.95                # VaR / ES confidence level
 RANDOM_SEED = 42                 # fixed seed = same results every run
+
+
+# ---- Objective 2: static hedge / forward pricing (Day 5) ----
+FORWARD_QUOTES_FILE = OUTPUTS_DIR / "forward_quotes.csv"
+FORWARD_TENOR_YEARS = 0.5        # 6-month forward; CIP uses simple interest: (1 + r x t)
+FORWARD_RATE_COLUMNS = {"inr": "india_tbill_rate", "usd": "us_tbill_rate"}   # matching-tenor rates
+OVERNIGHT_RATE_COLUMNS = {"inr": "india_interest_rate", "usd": "us_interest_rate"}  # for the tenor-mismatch comparison
