@@ -1,8 +1,10 @@
 # src/config.py
 from pathlib import Path
 
-RAW_DIR = Path("data/raw")
-PROCESSED_DIR = Path("data/processed")
+# Paths are anchored to the project root, so scripts work from any folder
+ROOT_DIR = Path(__file__).resolve().parent.parent
+RAW_DIR = ROOT_DIR / "data" / "raw"
+PROCESSED_DIR = ROOT_DIR / "data" / "processed"
 
 FRED_SERIES = {
     "usd_inr_spot": "DEXINUS",             # daily INR per USD spot rate
