@@ -59,3 +59,14 @@ HEDGE_RATIOS = [0.0, 0.25, 0.5, 0.75, 1.0]   # share of the USD payment locked i
 # One real 6-month USD/INR forward premium (annualised %, e.g. from FBIL), to compare with CIP.
 # Leave as None until you have looked one up.
 REAL_FORWARD_PREMIUM_ANNUAL_PCT = None
+
+
+# ---- Objective 3: regime detection (Days 8-9) ----
+MODELS_DIR = ROOT_DIR / "models"
+REGIME_FEATURES_FILE = PROCESSED_DIR / "regime_features.csv"
+SCALER_FILE = MODELS_DIR / "scaler_v1.pkl"
+
+# Chosen on Day 8 by comparing feature sets: macro levels (inflation_diff, rate_diff) drift over the
+# decades and turn the model into an "era" detector, so regimes use volatility only (see walkthrough)
+REGIME_FEATURES = ["vol_20d", "vol_60d"]
+REGIME_HISTORY_START = "2000-01-01"   # same market-determined era as the Monte Carlo
