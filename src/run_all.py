@@ -19,6 +19,8 @@ STEPS = [
     ("Obj 2: static hedge", ["src/static_hedge.py"]),
     ("Unit + smoke tests",  ["-m", "unittest", "discover", "tests"]),
     ("Obj 3: features",     ["src/regime_features.py"]),
+    ("Obj 3: features",     ["src/regime_features.py"]),
+    ("Obj 3: K-Means",      ["src/regime_model.py"]),
 ]
 
 

@@ -85,3 +85,31 @@ and runs all 29 tests. Results are fixed to the 2026-09-18 snapshot.
 To refresh the data, put `FRED_API_KEY=...` in a `.env` file and run `python src/run_all.py --fetch`.
 The snapshot test in `tests/test_week1_smoke.py` will then fail until you review the new numbers
 and update its expected values.
+
+
+## Objective 3: Regime Detection (K-Means)
+
+Three regimes from 20- and 60-day rupee volatility, 2000-2026 (6,697 days), scikit-learn K-Means, seed 42.
+
+| Regime | vol_20d centre | Share of days | Next 6 months: volatility | Next 6 months: worst 5% move |
+|---|---|---|---|---|
+| Calm | 2.8% | 45% | 4.0% | 7.0% |
+| Normal | 6.4% | 45% | 6.6% | 14.2% |
+| Crisis | 12.7% | 11% | 10.2% | 13.2% |
+
+Current regime (2026-09-18): Calm.
+
+**Feature choice (deviation from plan):** the plan's inflation_diff ends in 2025-06 (India CPI), and both it and
+rate_diff drift over decades, labelling 96-100% of 2022-2026 as Calm regardless of volatility. Volatility-only
+regimes work live and describe market turbulence; the interest-rate gap is already priced by the forward (Objective 2).
+
+**Choosing k:** inertia drops 43% from k=2 to k=3, then 26%, 23%, 17% (elbow at 3); silhouette is highest at
+k=2 (0.556) but k=3 (0.468) is well separated and gives a middle state for gradual hedging.
+
+**Validation:** GFC 100% Crisis, taper tantrum 94% Crisis, 2024 100% Calm; labels 99.97% identical across 3 seeds;
+regimes predict next-6-month risk (table above); 35 tests pass.
+
+**Known limitations:**
+- K-Means labels each day independently: 6.3 regime changes per year, no persistence (an HMM would model it).
+- COVID (Mar-May 2020) reads mostly Normal: RBI intervention held rupee volatility near 10%.
+- The scaler and clusters are fit on all 2000-2026 data; the backtest refits on past data only.

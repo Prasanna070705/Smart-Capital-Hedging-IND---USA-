@@ -70,3 +70,13 @@ SCALER_FILE = MODELS_DIR / "scaler_v1.pkl"
 # decades and turn the model into an "era" detector, so regimes use volatility only (see walkthrough)
 REGIME_FEATURES = ["vol_20d", "vol_60d"]
 REGIME_HISTORY_START = "2000-01-01"   # same market-determined era as the Monte Carlo
+
+
+# Day 9: the K-Means model
+K_CANDIDATES = [2, 3, 4, 5, 6]         # cluster counts compared by elbow and silhouette
+N_REGIMES = 3                           # chosen after looking at the k comparison (see Day 9 walkthrough)
+REGIME_NAMES = ["Calm", "Normal", "Crisis"]   # assigned by cluster centre vol_20d, lowest to highest
+KMEANS_N_INIT = 10                      # K-Means restarts; the best of 10 is kept
+KMEANS_FILE = MODELS_DIR / "kmeans_v1.pkl"
+REGIME_LABELS_FILE = OUTPUTS_DIR / "regime_labels.csv"
+K_SELECTION_FILE = OUTPUTS_DIR / "regime_k_selection.csv"
