@@ -71,3 +71,17 @@ Real forward quote: [value, source, date] -> gap [x] percentage points vs CIP.
 - Rates carry a 2-month publication lag, so September's forward uses July's rates.
 - Overnight rates would have overstated the premium by 0.28 percentage points a year (INR 132,000 on this exposure).
 - The table's expected costs use the simulation's 2000-2026 average drift, not a forecast.
+
+
+## How to Run
+
+    python3 -m venv venv && source venv/bin/activate
+    pip install -r requirements.txt
+    python src/run_all.py
+
+Rebuilds every output in `outputs/` from the committed raw data in `data/raw/` (about 3 seconds)
+and runs all 29 tests. Results are fixed to the 2026-09-18 snapshot.
+
+To refresh the data, put `FRED_API_KEY=...` in a `.env` file and run `python src/run_all.py --fetch`.
+The snapshot test in `tests/test_week1_smoke.py` will then fail until you review the new numbers
+and update its expected values.
