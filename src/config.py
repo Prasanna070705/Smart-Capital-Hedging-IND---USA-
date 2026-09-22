@@ -28,3 +28,17 @@ MACRO_LAG_MONTHS = 2
 
 # If a monthly series stops updating, stop carrying its last value forward after this many days
 MACRO_MAX_STALE_DAYS = 45
+
+
+# ---- Objective 1: baseline risk / Monte Carlo (Day 3) ----
+OUTPUTS_DIR = ROOT_DIR / "outputs"
+VAR_ES_FILE = OUTPUTS_DIR / "var_es.json"
+MC_PATHS_FILE = OUTPUTS_DIR / "mc_paths.npy"
+
+EXPOSURE_USD = 1_000_000         # the importer must pay this many USD at the end of the horizon
+HORIZON_DAYS = 126               # 6 months in TRADING days (~21 per month); the plan's "180 days" is calendar days
+N_SIMULATIONS = 10_000           # number of simulated future paths
+BLOCK_LEN = 10                   # days per bootstrap block (2 trading weeks), keeps volatility clustering
+HISTORY_START = "2000-01-01"     # sample only from the market-determined era (see walkthrough)
+CONFIDENCE = 0.95                # VaR / ES confidence level
+RANDOM_SEED = 42                 # fixed seed = same results every run

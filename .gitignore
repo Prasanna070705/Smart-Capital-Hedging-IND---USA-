@@ -54,3 +54,6 @@ htmlcov/
 
 # Mac
 .DS_Store
+
+outputs/*.npy
+outputs/*.npy

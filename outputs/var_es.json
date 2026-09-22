@@ -1,0 +1,21 @@
+{
+  "as_of": "2026-09-18",
+  "spot_today": 95.87,
+  "exposure_usd": 1000000,
+  "cost_today_inr": 95870000.0,
+  "horizon_trading_days": 126,
+  "n_simulations": 10000,
+  "block_len": 10,
+  "history_start": "2000-01-01",
+  "history_days_used": 6697,
+  "confidence": 0.95,
+  "random_seed": 42,
+  "spot_end_median": 97.1982,
+  "spot_end_p05": 90.6458,
+  "spot_end_p95": 104.6866,
+  "expected_cost_increase_inr": 1513705.93,
+  "var_inr": 8816565.65,
+  "es_inr": 11250288.41,
+  "var_pct_of_cost": 9.196,
+  "es_pct_of_cost": 11.735
+}
