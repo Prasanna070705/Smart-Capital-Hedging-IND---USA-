@@ -19,3 +19,26 @@ Pulled from FRED on 2026-09-22. Dates are the first and last observations that h
 - `us_interest_rate` is the effective Fed Funds rate (replaced the US discount rate, which ended 2021-08).
 - `india_interest_rate` is the call money rate (replaced the India discount rate, which ended 2022-07).
 - `india_cpi` has no live FRED replacement, so it is used for training only. `india_reer` (CPI-based real effective exchange rate) is the live inflation signal.
+
+## Objective 1: Baseline Risk (Monte Carlo)
+
+Unhedged USD 1,000,000 payment due in 6 months, as of 2026-09-18 (spot 95.87):
+
+| Measure | Value |
+|---|---|
+| VaR 95% | INR 8.82 million (9.20% of today's cost) |
+| ES 95% | INR 11.25 million (11.73% of today's cost) |
+| Median rate in 6 months | 97.20 |
+
+**Method:** moving-block bootstrap of daily log returns, 10,000 paths x 126 trading days, 10-day blocks, history from 2000-01-01, seed 42.
+
+**Validation** (`src/validate_risk.py`, `tests/test_risk_baseline.py`):
+- Parametric normal VaR is 9.49% (ES 11.63%); Monte Carlo / parametric = 0.97.
+- 10-day blocks keep 90% of the historical lag-1 volatility clustering (0.277 vs 0.307); i.i.d. day sampling keeps 0%.
+- VaR ranges only 8.99%-9.42% across block lengths 1, 5, 10 and 20.
+- 9 unit tests pass, including a hand-calculated VaR/ES.
+
+**Known limitations:**
+- Clustering beyond the 10-day block length is not preserved.
+- The simulation resamples 2000-2026 history, so it inherits that period's average rupee depreciation (about 1.4% per 6 months) and cannot produce a single-day move larger than any seen since 2000.
+- The 6-month VaR is point-in-time (rate on the payment date), not path-dependent.
