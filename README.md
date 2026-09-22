@@ -1,4 +1,50 @@
-# Regime-Aware FX Hedging
+# Regime-Aware FX Hedging for Indian Importers
+
+A decision tool that tells an Indian importer how much of a future US-dollar payment to lock in with a forward
+contract, given today's market regime and how much risk they can take.
+
+Team AA11: Deep Amit Lodaya, Harigovind K, Vimal P Menon, Dasigi Prasanna Jagannath.
+
+## Results at a Glance
+
+Snapshot of 2026-09-18 (spot 95.87 INR per USD, market regime: Calm):
+
+- **Unhedged risk:** a USD payment due in 6 months could cost 9.2% more in a 1-in-20 bad case (ES 11.7%).
+- **Cost of hedging:** the 6-month forward is 96.62, a 0.78% premium over spot.
+- **Recommendation:** a Balanced buyer should hedge 50% today (60% in a Normal market, 75% in a Crisis).
+  Example: INR 10 crore due in 6 months -> book USD 521,540 forward; worst 1-in-20 extra cost INR 39.8 lakh
+  instead of INR 71.7 lakh unhedged.
+- **Backtest (2012-2026, 171 out-of-sample decisions):** the tool cut the worst outcome versus a fixed 50% hedge
+  (5.65% vs 14.65% of cost) for 0.25 points more average cost. Regime detection improved the risk forecast but did
+  not measurably improve hedging outcomes beyond the risk-budget rule.
+
+## How to Run
+
+    python3 -m venv venv && source venv/bin/activate
+    pip install -r requirements.txt
+    python src/run_all.py          # rebuilds every output and runs all 66 tests (about 20 seconds)
+    streamlit run app.py           # opens the hedging advisor at http://localhost:8501
+
+Results are fixed to the 2026-09-18 snapshot committed in `data/raw/`. To refresh the data, put
+`FRED_API_KEY=...` in a `.env` file and run `python src/run_all.py --fetch`. The snapshot tests
+(`tests/test_week1_smoke.py`, `tests/test_regime.py`, `tests/test_advisor.py`, `tests/test_app.py`) will then
+fail until you review the new numbers and update their expected values.
+
+## How It Works
+
+| Stage | Script | Writes |
+|---|---|---|
+| 1. Ingestion | `src/ingestion.py` | `data/raw/*.csv` (8 FRED series) |
+| 2. Features | `src/features.py` | `data/processed/processed_fx_master.csv` |
+| 3. Baseline risk (Objective 1) | `src/risk_baseline.py`, `src/validate_risk.py` | `outputs/var_es.json`, `outputs/obj1_validation.json` |
+| 4. Forward and static hedges (Objective 2) | `src/forward_pricing.py`, `src/static_hedge.py` | `outputs/forward_quotes.csv`, `outputs/static_hedge.csv` |
+| 5. Regimes (Objective 3) | `src/regime_features.py`, `src/regime_model.py` | `models/scaler_v1.pkl`, `models/kmeans_v1.pkl`, `outputs/regime_labels.csv` |
+| 6. Recommendation (Objective 4a) | `src/optimizer.py` | `outputs/utility_scores.csv`, `outputs/candidates_today.csv` |
+| 7. Backtest | `src/backtest.py` | `outputs/backtest_decisions.csv`, `outputs/backtest_summary.csv` |
+| 8. App (Objective 4b) | `app.py` using `src/advisor.py` | none (display only) |
+
+All settings live in `src/config.py`. `src/run_all.py` runs stages 2-7 and the tests in order and stops at the
+first failure. The app contains no finance of its own; it only calls `src/`.
 
 ## Raw Data Coverage (`data/raw/`)
 
@@ -12,6 +58,8 @@ Pulled from FRED on 2026-09-22. Dates are the first and last observations that h
 | `us_interest_rate.csv` | FEDFUNDS | Monthly | 1954-07-01 | 2026-08-01 | 866 | 0 |
 | `india_interest_rate.csv` | IRSTCI01INM156N | Monthly | 1968-01-01 | 2026-07-01 | 703 | 0 |
 | `india_reer.csv` | CCRETT01INM661N | Monthly | 1970-01-01 | 2026-08-01 | 680 | 0 |
+| `us_tbill_rate.csv` | TB3MS | Monthly | 1934-01-01 | 2026-08-01 | 1,112 | 0 |
+| `india_tbill_rate.csv` | INDIR3TIB01STM | Monthly | 2011-11-01 | 2026-07-01 | 177 | 0 |
 
 **Common overlap across all series:** 1973-01 to 2025-03 (limited by India CPI). Excluding India CPI: 1973-01 to 2026-07.
 
@@ -19,6 +67,7 @@ Pulled from FRED on 2026-09-22. Dates are the first and last observations that h
 - `us_interest_rate` is the effective Fed Funds rate (replaced the US discount rate, which ended 2021-08).
 - `india_interest_rate` is the call money rate (replaced the India discount rate, which ended 2022-07).
 - `india_cpi` has no live FRED replacement, so it is used for training only. `india_reer` (CPI-based real effective exchange rate) is the live inflation signal.
+- `us_tbill_rate` (US 3-month T-bill) and `india_tbill_rate` (India 3-month interbank rate) are the matching-tenor rates used to price the forward (added Day 5).
 
 ## Objective 1: Baseline Risk (Monte Carlo)
 
@@ -43,7 +92,6 @@ Unhedged USD 1,000,000 payment due in 6 months, as of 2026-09-18 (spot 95.87):
 - The simulation resamples 2000-2026 history, so it inherits that period's average rupee depreciation (about 1.4% per 6 months) and cannot produce a single-day move larger than any seen since 2000.
 - The 6-month VaR is point-in-time (rate on the payment date), not path-dependent.
 
-
 ## Objective 2: Static Hedging (Forward Contract)
 
 6-month forward by covered interest parity, as of 2026-09-18: spot 95.87, India 3-month rate 5.32%,
@@ -63,7 +111,7 @@ INR millions of extra cost vs paying at today's spot, USD 1,000,000 exposure, sa
 2.24% per 6 months; the forward beat waiting in 46% of windows (range -13.3% to +20.5%).
 
 **Validation:** forward hand-checked on a calculator; overnight-rate forward 96.7504 reproduced; 22 unit tests pass.
-Real forward quote: [value, source, date] -> gap [x] percentage points vs CIP.
+Real forward quote: not checked (see Limitations).
 
 **Known limitations:**
 - CIP estimates a fair forward; real quotes include a bank spread and India's capital-control frictions.
@@ -71,21 +119,6 @@ Real forward quote: [value, source, date] -> gap [x] percentage points vs CIP.
 - Rates carry a 2-month publication lag, so September's forward uses July's rates.
 - Overnight rates would have overstated the premium by 0.28 percentage points a year (INR 132,000 on this exposure).
 - The table's expected costs use the simulation's 2000-2026 average drift, not a forecast.
-
-
-## How to Run
-
-    python3 -m venv venv && source venv/bin/activate
-    pip install -r requirements.txt
-    python src/run_all.py
-
-Rebuilds every output in `outputs/` from the committed raw data in `data/raw/` (about 3 seconds)
-and runs all 29 tests. Results are fixed to the 2026-09-18 snapshot.
-
-To refresh the data, put `FRED_API_KEY=...` in a `.env` file and run `python src/run_all.py --fetch`.
-The snapshot test in `tests/test_week1_smoke.py` will then fail until you review the new numbers
-and update its expected values.
-
 
 ## Objective 3: Regime Detection (K-Means)
 
@@ -113,7 +146,6 @@ regimes predict next-6-month risk (table above); 35 tests pass.
 - K-Means labels each day independently: 6.3 regime changes per year, no persistence (an HMM would model it).
 - COVID (Mar-May 2020) reads mostly Normal: RBI intervention held rupee volatility near 10%.
 - The scaler and clusters are fit on all 2000-2026 data; the backtest refits on past data only.
-
 
 ## Objective 4a: Regime-Aware Hedge Recommendation
 
@@ -143,7 +175,21 @@ Normal 8.6% -> Crisis 12.2%; recommendations never fall as the regime worsens or
 - The simulation understates risk after Normal days (8.6% vs 14.2% actually observed), because Normal often preceded crises.
 - No bank spread is included, and the risk levels (1-9%) are a design choice, not estimated from data.
 
+## Objective 4b: Hedging Advisor App
 
+`streamlit run app.py`. Inputs: payment amount (INR crore or USD), months until payment (1-12), risk tolerance
+(5 levels or a custom limit in INR lakh). Three tabs:
+
+- **Recommendation:** today's regime, the forward rate for that date, the hedge to book, the bad-case cost with and
+  without it, a histogram of 10,000 simulated outcomes, every option compared, and the risk curve against the limit.
+- **Track record:** the backtest table, forward premium vs the rupee's actual move since 2012, and the recommended
+  hedge over time.
+- **How it works:** method and limits in plain language.
+
+Market data is cached once (`st.cache_resource`) and each payment date's simulation is cached (`st.cache_data`), so
+changing the amount or risk level is instant. The app warns when the data snapshot is more than 30 days old.
+`tests/test_app.py` runs the app headless (Streamlit `AppTest`) for the default inputs, both risk extremes, every
+payment length and a USD / 1-month / tiny-limit edge case.
 
 ## Backtest (Walk-Forward, 2012-2026)
 
@@ -173,3 +219,52 @@ the cost is measured with the actual rupee rate 126 trading days later.
 **Limitations:** overlapping windows (about 28 independent periods); only 16 Crisis months; in 2012-2016 the premium
 (about 4%) exceeded the Balanced limit, forcing 100% hedges; model pickle is not byte-reproducible across runs on
 multi-threaded machines (its outputs are).
+
+## Deviations from the Proposal
+
+Each change below was tested before it was made; the evidence is in the section named.
+
+| Proposal | Built | Why | Evidence |
+|---|---|---|---|
+| Sample random single days | 10-day blocks | Single days destroy volatility clustering | Objective 1: 90% of clustering kept vs 0% |
+| Chain 180 days for 6 months | 126 trading days | 180 is calendar days; 180 trading days is 8.5 months | Objective 1 |
+| Last 20 years of history | 2000-2026 | Covers GFC, taper tantrum and COVID; pre-2000 rupee was managed | Objective 1 |
+| 6-month interest rates | 3-month rates for both countries | No live 6-month India rate on FRED; tenors still match | Objective 2 |
+| Inflation differential as a regime feature | Volatility only | India CPI stops in 2025; macro gaps label eras, not market states | Objective 3 |
+| Utility = Cost + lambda x VaR | Smallest hedge within a VaR budget | The linear utility only ever picks 0% or 100% | Objective 4a |
+| Hold out the last 6-12 months | Walk-forward, 171 monthly decisions | A 6-12 month hold-out gives only 1-2 outcomes | Backtest |
+
+## Limitations and Future Work
+
+**Data**
+- Fixed snapshot (2026-09-18); the app does not fetch live data. Future work: refresh automatically when the
+  snapshot is more than a day old.
+- Monthly rates carry a 2-month publication lag; India's rate is an interbank rate; India CPI stops in 2025-03.
+
+**Pricing**
+- The forward is a covered-interest-parity estimate. A bank's quote adds a spread, so real hedging costs slightly
+  more than shown. A real quote has not yet been compared (`REAL_FORWARD_PREMIUM_ANNUAL_PCT` in `src/config.py`).
+
+**Model**
+- Simulations resample 2000-2026 history, so they cannot produce a daily move larger than any seen since 2000, and
+  volatility clustering beyond 10 days is lost.
+- K-Means ignores regime persistence (6.3 changes per year). Future work: a Hidden Markov Model.
+- The risk levels (1-9% of cost) are a design choice, not estimated from data.
+
+**Evidence**
+- The backtest has about 28 independent 6-month periods and 16 Crisis months, so small differences are noise.
+- Regime detection improved risk forecasts but not realised hedging outcomes in 2012-2026.
+
+**Reproducibility**
+- All outputs are byte-for-byte reproducible from the committed data. `models/kmeans_v1.pkl` itself can differ in
+  its last decimals on multi-threaded machines; its labels and scores do not.
+
+This is a model built on past data, not financial advice.
+
+## References
+
+- Engle, R. (2002). Dynamic Conditional Correlation: A Simple Class of Multivariate Generalized Autoregressive
+  Conditional Heteroskedasticity Models. *Journal of Business & Economic Statistics*, 20(3), 339-350.
+- Cappiello, L., Engle, R. and Sheppard, K. (2006). Asymmetric Dynamics in the Correlations of Global Equity and
+  Bond Returns. *Journal of Financial Econometrics*, 4(4), 537-572.
+- Data: Federal Reserve Bank of St. Louis, FRED (series listed under Raw Data Coverage).
