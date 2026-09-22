@@ -142,3 +142,34 @@ Normal 8.6% -> Crisis 12.2%; recommendations never fall as the regime worsens or
 - Centring on the forward assumes it is an unbiased forecast (supported by the Day 6 history check, not guaranteed).
 - The simulation understates risk after Normal days (8.6% vs 14.2% actually observed), because Normal often preceded crises.
 - No bank spread is included, and the risk levels (1-9%) are a design choice, not estimated from data.
+
+
+
+## Backtest (Walk-Forward, 2012-2026)
+
+171 monthly decisions (2012-01 to 2026-03, about 28 independent 6-month periods). At each decision the scaler,
+K-Means and regime names are refit on data up to that day only; the hedge is chosen exactly as the app does;
+the cost is measured with the actual rupee rate 126 trading days later.
+
+| Strategy (Balanced where dynamic) | Avg hedge | Avg extra cost | 1-in-20 bad case | Worst |
+|---|---|---|---|---|
+| Static 0% | 0% | 2.24% | 9.94% | 25.32% |
+| Static 50% | 50% | 2.33% | 6.68% | 14.65% |
+| Static 100% | 100% | 2.43% | 4.39% | 5.65% |
+| Fixed at 79% (same average as regime-aware) | 79% | 2.39% | 4.63% | 8.36% |
+| Regime-blind budget rule | 82% | 2.55% | 4.39% | 5.65% |
+| Regime-aware budget rule | 79% | 2.58% | 4.39% | 5.65% |
+
+**Findings:**
+- Versus static 50%, the tool cuts the worst outcome from 14.65% to 5.65% of cost, for 0.25 points more average cost.
+- Adjusting monthly beats a fixed hedge at the same average ratio on tail risk at every tolerance level
+  (Balanced worst 5.65% vs 8.36%; Very relaxed 14.65% vs 20.37%), for 0.2-0.3 points more average cost.
+- Regime-aware and regime-blind hedges gave nearly identical results: the benefit comes from the risk-budget rule.
+- Regimes do improve the risk forecast: unhedged VaR 95% exceeded 2.9% of the time (4.7% regime-blind; target 5%),
+  with lower forecasts in Calm months (8.2% vs 9.7%) and higher in Crisis (16.9% vs 12.8%).
+- Average forward premium 2.43% vs average actual depreciation 2.24% per 6 months: hedging cost slightly more
+  than it saved on average in this period.
+
+**Limitations:** overlapping windows (about 28 independent periods); only 16 Crisis months; in 2012-2016 the premium
+(about 4%) exceeded the Balanced limit, forcing 100% hedges; model pickle is not byte-reproducible across runs on
+multi-threaded machines (its outputs are).

@@ -96,3 +96,10 @@ RISK_LEVELS = {
     "Relaxed":       6.0,
     "Very relaxed":  9.0,
 }
+
+
+# ---- Backtest (Day 12) ----
+BACKTEST_FILE = OUTPUTS_DIR / "backtest_decisions.csv"
+BACKTEST_SUMMARY_FILE = OUTPUTS_DIR / "backtest_summary.csv"
+BACKTEST_START = "2012-01-01"   # first month with a matching-tenor forward (India 3-month rate starts 2011-11)
+BACKTEST_N_SIMS = 10_000         # per decision, same as the app

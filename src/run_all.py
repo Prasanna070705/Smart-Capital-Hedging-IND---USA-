@@ -1,5 +1,5 @@
 # src/run_all.py
-# Week 1 pipeline: rebuilds every output from the raw data in one command, in the right order.
+# Project pipeline: rebuilds every output from the raw data in one command, in the right order.
 # Run from anywhere:  python src/run_all.py            (uses the saved raw snapshot)
 #                     python src/run_all.py --fetch    (re-downloads all FRED data first - changes results!)
 import subprocess
@@ -17,10 +17,11 @@ STEPS = [
     ("Obj 1: validation",   ["src/validate_risk.py"]),
     ("Obj 2: forward",      ["src/forward_pricing.py"]),
     ("Obj 2: static hedge", ["src/static_hedge.py"]),
-    ("Unit + smoke tests",  ["-m", "unittest", "discover", "tests"]),
     ("Obj 3: features",     ["src/regime_features.py"]),
     ("Obj 3: K-Means",      ["src/regime_model.py"]),
     ("Obj 4a: optimiser",   ["src/optimizer.py"]),
+    ("Backtest",            ["src/backtest.py"]),
+    ("Unit + smoke tests",  ["-m", "unittest", "discover", "tests"]),
 ]
 
 
