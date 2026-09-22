@@ -51,3 +51,11 @@ FORWARD_QUOTES_FILE = OUTPUTS_DIR / "forward_quotes.csv"
 FORWARD_TENOR_YEARS = 0.5        # 6-month forward; CIP uses simple interest: (1 + r x t)
 FORWARD_RATE_COLUMNS = {"inr": "india_tbill_rate", "usd": "us_tbill_rate"}   # matching-tenor rates
 OVERNIGHT_RATE_COLUMNS = {"inr": "india_interest_rate", "usd": "us_interest_rate"}  # for the tenor-mismatch comparison
+
+
+# Objective 2 (part 2): static hedge comparison (Day 6)
+STATIC_HEDGE_FILE = OUTPUTS_DIR / "static_hedge.csv"
+HEDGE_RATIOS = [0.0, 0.25, 0.5, 0.75, 1.0]   # share of the USD payment locked in with the forward
+# One real 6-month USD/INR forward premium (annualised %, e.g. from FBIL), to compare with CIP.
+# Leave as None until you have looked one up.
+REAL_FORWARD_PREMIUM_ANNUAL_PCT = None

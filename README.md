@@ -42,3 +42,32 @@ Unhedged USD 1,000,000 payment due in 6 months, as of 2026-09-18 (spot 95.87):
 - Clustering beyond the 10-day block length is not preserved.
 - The simulation resamples 2000-2026 history, so it inherits that period's average rupee depreciation (about 1.4% per 6 months) and cannot produce a single-day move larger than any seen since 2000.
 - The 6-month VaR is point-in-time (rate on the payment date), not path-dependent.
+
+
+## Objective 2: Static Hedging (Forward Contract)
+
+6-month forward by covered interest parity, as of 2026-09-18: spot 95.87, India 3-month rate 5.32%,
+US 3-month T-bill 3.73% (July values) -> forward 96.6182, premium 0.78% for 6 months (1.56% annualised).
+
+| Hedged | Locked cost | Expected extra cost | VaR 95% | ES 95% |
+|---|---|---|---|---|
+| 0% | 0.00 | 1.51 | 8.82 | 11.25 |
+| 25% | 0.19 | 1.32 | 6.80 | 8.62 |
+| 50% | 0.37 | 1.13 | 4.78 | 6.00 |
+| 75% | 0.56 | 0.94 | 2.77 | 3.37 |
+| 100% | 0.75 | 0.75 | 0.75 | 0.75 |
+
+INR millions of extra cost vs paying at today's spot, USD 1,000,000 exposure, same 10,000 paths as Objective 1.
+
+**History check (2012-2026, 3,554 windows):** average forward premium 2.43% vs average actual depreciation
+2.24% per 6 months; the forward beat waiting in 46% of windows (range -13.3% to +20.5%).
+
+**Validation:** forward hand-checked on a calculator; overnight-rate forward 96.7504 reproduced; 22 unit tests pass.
+Real forward quote: [value, source, date] -> gap [x] percentage points vs CIP.
+
+**Known limitations:**
+- CIP estimates a fair forward; real quotes include a bank spread and India's capital-control frictions.
+- India's rate is a 3-month interbank rate (no India T-bill series on FRED), priced a 6-month forward; TB3MS is on a discount basis.
+- Rates carry a 2-month publication lag, so September's forward uses July's rates.
+- Overnight rates would have overstated the premium by 0.28 percentage points a year (INR 132,000 on this exposure).
+- The table's expected costs use the simulation's 2000-2026 average drift, not a forecast.

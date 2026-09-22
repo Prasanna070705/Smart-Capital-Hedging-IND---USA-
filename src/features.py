@@ -32,8 +32,7 @@ def build_daily_fx():
 
 def build_monthly_macro():
     """Monthly macro table, with derived features and a publication lag applied."""
-    macro = pd.concat([load_raw(n) for n in MONTHLY_SERIES], axis=1)
-
+    macro = pd.concat([load_raw(n) for n in MONTHLY_SERIES], axis=1, sort=True)
     # Fill single isolated gaps (e.g. US CPI 2025-10) by interpolation; never extend past the end
     macro = macro.interpolate(limit=1, limit_area="inside")
 
