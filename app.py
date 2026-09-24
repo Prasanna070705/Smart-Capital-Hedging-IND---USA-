@@ -13,8 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from config import RISK_LEVELS
 from advisor import load_market, simulate_payment, scores_from_paths, budget_pct_from_inr, advise
 from formatting import rate
-from views import recommendation, insights, track_record, about
-from views import recommendation, insights, track_record, about, ask
+from views import recommendation, insights, track_record, about, ask, theme
 
 STALE_AFTER_DAYS = 30   # warn when the market snapshot is older than this
 
@@ -28,6 +27,7 @@ TABS = [
 ]
 
 st.set_page_config(page_title="FX Hedging Advisor", page_icon="💱", layout="wide")
+theme.apply()          # Day 7b: dark (black and blue) by default, Dark mode toggle in the sidebar
 
 
 # ---------- Cached loaders: the heavy work runs once, not on every click ----------
