@@ -22,8 +22,10 @@ Snapshot of 2026-09-18 (spot 95.87 INR per USD, market regime: Calm):
 
     python3 -m venv venv && source venv/bin/activate
     pip install -r requirements.txt
-    python src/run_all.py          # rebuilds every output and runs all 66 tests (about 20 seconds)
+    python src/run_all.py          # rebuilds every output and runs all 103 tests (about 20 seconds)
     streamlit run app.py           # opens the hedging advisor at http://localhost:8501
+    docker build -t fx-hedging:1.1 .                                # or: docker compose up --build
+    docker run --rm -p 8501:8501 --env-file .env fx-hedging:1.1     # omit --env-file for offline mode
 
 Results are fixed to the 2026-09-18 snapshot committed in `data/raw/`. To refresh the data, put
 `FRED_API_KEY=...` in a `.env` file and run `python src/run_all.py --fetch`. The snapshot tests

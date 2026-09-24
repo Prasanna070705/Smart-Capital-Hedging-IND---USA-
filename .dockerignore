@@ -1,0 +1,22 @@
+# Never put secrets or local environments into the image
+.env
+venv/
+.venv/
+.git/
+.gitignore
+
+# Caches and large rebuildable files
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+outputs/*.npy
+.DS_Store
+
+# Not needed at run time
+notebooks/
+Animations/
+.agents/
+.claude/
+Dockerfile
+.dockerignore
+docker-compose.yml
