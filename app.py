@@ -12,6 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 from config import RISK_LEVELS
 from advisor import (REGIME_TEXT, load_market, simulate_payment, scores_from_paths, budget_pct_from_inr,
                      advise, candidates_table, outcome_histogram, load_track_record)
+from formatting import inr, inr_short, rate, answer_card
+from glossary import tip
 
 STALE_AFTER_DAYS = 30   # warn when the market snapshot is older than this
 
@@ -34,10 +36,6 @@ def track_record():
     return load_track_record()
 
 
-def lakh(inr):
-    return f"₹{inr / 1e5:,.1f} lakh"
-
-
 # ---------- Inputs ----------
 m = market()
 st.title("USD payment hedging advisor")
@@ -53,21 +51,23 @@ with st.sidebar:
     if unit == "USD":
         invoice_usd = st.number_input("Invoice amount (USD)", min_value=1_000.0, max_value=1e10,
                                       value=1_000_000.0, step=10_000.0, format="%.0f", key="amount_usd")
+        st.caption(f"= {inr(invoice_usd * m['spot'])} ({inr_short(invoice_usd * m['spot'])}) at today's rate")
     else:
         crore = st.number_input("Amount (₹ crore)", min_value=0.01, max_value=100_000.0, value=10.0,
                                 step=0.5, key="amount_crore")
         invoice_usd = crore * 1e7 / m["spot"]
+        st.caption(f"= {inr(crore * 1e7)}, about USD {invoice_usd:,.0f} at today's rate")
     months = st.slider("Months until payment", min_value=1, max_value=12, value=6, key="months",
-                       help="For payments due in less than a month, use 1: the tool's shortest horizon.")
+                       help=tip("months until payment") + " For payments due in less than a month, use 1.")
 
     st.header("Your risk tolerance")
     level = st.select_slider("How much risk can you take?", options=list(RISK_LEVELS), value="Balanced",
-                             key="risk_level")
+                             key="risk_level", help=tip("risk tolerance"))
     budget_pct = RISK_LEVELS[level]
     with st.expander("Or set your own limit in rupees"):
         own = st.number_input("Largest extra cost you could absorb in a bad case (₹ lakh)",
                               min_value=0.0, value=0.0, step=1.0, key="own_limit",
-                              help="Leave at 0 to use the risk tolerance above.")
+                              help=tip("risk limit") + " Leave at 0 to use the risk tolerance above.")
         if own > 0:
             budget_pct = budget_pct_from_inr(own * 1e5, invoice_usd, m["spot"])
 
@@ -80,35 +80,39 @@ tab_rec, tab_track, tab_about = st.tabs(["Recommendation", "Track record", "How 
 
 # ---------- Tab 1: the recommendation ----------
 with tab_rec:
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Spot rate today", f"₹{m['spot']:.2f} per USD")
-    c2.metric(f"{months}-month forward rate", f"₹{forward:.2f} per USD",
-              f"{(forward / m['spot'] - 1) * 100:+.2f}% vs spot", delta_color="off")
-    c3.metric("Market regime", m["regime"])
-    st.info(REGIME_TEXT[m["regime"]])
-
-    st.header(f"Recommendation: hedge {a['ratio']:.0%}")
-    st.write(
-        f"Book a forward contract for **USD {a['hedge_usd']:,.0f}** at ₹{forward:.2f}, and buy the remaining "
-        f"**USD {a['open_usd']:,.0f}** at the market rate when the payment is due."
-    )
-    r1, r2, r3 = st.columns(3)
-    r1.metric("Your bad-case limit", lakh(a["budget_inr"]))
-    r2.metric("Worst 1-in-20 extra cost with this hedge", lakh(a["var_inr"]),
-              f"{lakh(a['unhedged_var_inr'])} if unhedged", delta_color="off")
-    r3.metric("Locked-in cost of the hedge", lakh(a["premium_inr"]))
+    card = answer_card(a, months)
+    with st.container(border=True):
+        st.header(card["headline"])
+        st.markdown(card["action"])
+        st.markdown(card["protection"])
+        if card["cost"]:
+            st.markdown(card["cost"])
     if not a["fits_budget"]:
         st.warning("Even a full hedge costs more than your limit, because the forward rate is above today's "
                    "rate. A 100% hedge is the lowest-risk option available.")
 
-    st.subheader("What could happen: 10,000 simulated outcomes")
+    st.subheader("Why this hedge")
+    r1, r2, r3 = st.columns(3)
+    r1.metric("Your bad-case limit", inr_short(a["budget_inr"]), help=tip("risk limit"))
+    r2.metric("1-in-20 bad case with this hedge", inr_short(a["var_inr"]),
+              f"{inr_short(a['unhedged_var_inr'])} if unhedged", delta_color="off", help=tip("bad case"))
+    r3.metric("Locked-in cost of the hedge", inr_short(a["premium_inr"]), help=tip("locked-in cost"))
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Spot rate today", rate(m["spot"]), help=tip("spot rate"))
+    c2.metric(f"{months}-month forward rate", rate(forward),
+              f"{(forward / m['spot'] - 1) * 100:+.2f}% vs spot", delta_color="off", help=tip("forward rate"))
+    c3.metric("Market regime", m["regime"], help=tip("market regime"))
+    st.info(REGIME_TEXT[m["regime"]])
+
+    st.subheader("What could happen: 10,000 simulated outcomes", help=tip("simulated outcomes"))
     ratios = [0.0] if a["ratio"] == 0 else [0.0, a["ratio"]]
     st.bar_chart(outcome_histogram(spot_end, forward, m["spot"], invoice_usd, ratios), stack=False,
                  x_label="Extra cost vs paying at today's rate (₹ lakh)", y_label="% of outcomes")
     st.caption("Left of zero: the rupee strengthened and you paid less. The hedge narrows the spread: "
                "fewer painful outcomes on the right, less windfall on the left.")
 
-    st.subheader("All options compared")
+    st.subheader("All options compared", help=tip("worst cases average"))
     st.caption("Extra rupees compared with paying at today's rate. Negative = you pay less.")
     st.dataframe(candidates_table(grid, a["cost_today_inr"], a["ratio"]), hide_index=True)
 
