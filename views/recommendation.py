@@ -4,6 +4,8 @@ import pandas as pd
 import streamlit as st
 
 from advisor import REGIME_TEXT, candidates_table, outcome_histogram
+from charts import outcome_histogram_chart, risk_curve_chart, regime_timeline_chart
+from config import REGIME_LABELS_FILE, BLOCK_LEN
 from formatting import inr_short, usd, rate
 from glossary import tip
 
@@ -27,6 +29,11 @@ def answer_card(ctx):
                        "rate. A 100% hedge is the lowest-risk option available.")
 
 
+@st.cache_data
+def _labels():
+    return pd.read_csv(REGIME_LABELS_FILE, parse_dates=["date"], index_col="date")
+
+
 def market_row(ctx):
     m, fwd = ctx["market"], ctx["forward"]
     c1, c2, c3 = st.columns(3)
@@ -36,26 +43,34 @@ def market_row(ctx):
     c3.metric("Market regime", m["regime"], help=tip("Regime"))
     st.info(REGIME_TEXT[m["regime"]])
 
+    labels = _labels()
+    regime = labels["regime"]
+    run = int((regime[::-1] != regime.iloc[-1]).argmax())      # trading days in the current regime
+    stay = m["trans"].loc[m["regime"], m["regime"]]
+    with st.expander(f"Regime history: {m['regime']} for the last {run} trading days"):
+        data, spec = regime_timeline_chart(labels)
+        st.vega_lite_chart(data, spec)
+        st.caption(f"Historically, a {m['regime']} market was still {m['regime']} {BLOCK_LEN} trading days "
+                   f"later {stay:.0%} of the time.")
+
 
 def distribution_chart(ctx):
     a, m = ctx["advice"], ctx["market"]
-    st.subheader("What could happen: 10,000 simulated outcomes")
     ratios = [0.0] if a["ratio"] == 0 else [0.0, a["ratio"]]
-    st.bar_chart(outcome_histogram(ctx["spot_end"], ctx["forward"], m["spot"], ctx["invoice_usd"], ratios),
-                 stack=False, x_label="Extra cost vs paying at today's rate (₹ lakh)", y_label="% of outcomes")
-    st.caption("Left of zero: the rupee strengthened and you paid less. The hedge narrows the spread: "
-               "fewer painful outcomes on the right, less windfall on the left.")
+    hist = outcome_histogram(ctx["spot_end"], ctx["forward"], m["spot"], ctx["invoice_usd"], ratios)
+    data, spec = outcome_histogram_chart(hist, a["var_inr"] / 1e5, a["budget_inr"] / 1e5)
+    st.vega_lite_chart(data, spec)
+    st.caption("Left of zero: the rupee strengthened and you paid less. The hedge narrows the spread: fewer "
+               "painful outcomes on the right, less windfall on the left. Dashed lines: your limit, and the "
+               "worst 1-in-20 cost with the recommended hedge.")
 
 
 def risk_curve(ctx):
-    a, grid = ctx["advice"], ctx["grid"]
-    curve = pd.DataFrame({
-        "Hedge ratio (%)": (grid["hedge_ratio"] * 100).round(),
-        "Worst 1-in-20 extra cost (lakh)": grid["var_pct"] / 100 * a["cost_today_inr"] / 1e5,
-        "Your limit (lakh)": a["budget_inr"] / 1e5,
-    }).set_index("Hedge ratio (%)")
-    st.line_chart(curve)
-    st.caption("The recommendation is the smallest hedge where the worst-case line drops below your limit line.")
+    a = ctx["advice"]
+    data, spec = risk_curve_chart(ctx["grid"], a["cost_today_inr"], a["budget_inr"] / 1e5, a["ratio"])
+    st.vega_lite_chart(data, spec)
+    st.caption("The recommendation (large dot) is the smallest hedge whose worst case drops below your limit "
+               "(dashed line): the protection you need, while keeping the rest of the upside.")
 
 
 def render(ctx):

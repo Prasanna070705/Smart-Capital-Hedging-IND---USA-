@@ -1,6 +1,10 @@
 # tests/test_insights.py
 # Tests for the v1.1 insights. Run from the fx-hedging root:
 #   python -m unittest discover tests -v
+import sys
+import unittest
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
