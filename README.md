@@ -268,3 +268,30 @@ This is a model built on past data, not financial advice.
 - Cappiello, L., Engle, R. and Sheppard, K. (2006). Asymmetric Dynamics in the Correlations of Global Equity and
   Bond Returns. *Journal of Financial Econometrics*, 4(4), 537-572.
 - Data: Federal Reserve Bank of St. Louis, FRED (series listed under Raw Data Coverage).
+
+
+## Version 1.1: Insights, Charts and an Optional Chatbot
+
+**New in the app:** an answer card with Indian number formatting and tooltips; charts that mark the buyer's limit,
+the hedged bad case and the recommended ratio; a regime timeline; an Insights tab (is hedging cheap now, break-even
+rate, payment-date curve, replay of 1991/2008/2013/2018/2020, the bank's real quote, a downloadable summary); and an
+Ask tab.
+
+**Two modes, chosen automatically:**
+
+| Situation | Behaviour |
+|---|---|
+| Internet and `CHAT_API_KEY` in `.env` | Full app plus the Ask tab chatbot |
+| Offline, no key, or provider down | Full hedge recommendation app; the Ask tab explains why chat is off |
+
+**Chatbot design:** free OpenAI-compatible API (Groq free tier, model in `src/config.py`); retrieval-augmented with
+TF-IDF over this README and a glossary; the live recommendation in every prompt; two tools that run the project's
+own model (`run_hedge_model`, `hedging_cost_context`); every number in an answer checked against the prompt and tool
+results. Questions and on-screen numbers are sent to the provider; no personal data is involved.
+
+**Evaluation** (`tests/chatbot_eval.py`, 15 questions with known answers, checked for facts, grounding and tool use):
+[your score]/15 with [model ID] on [date]. [One line per failure and what it shows.]
+
+**Stress replay finding:** a repeat of 2008 or 2013 would cost a Balanced buyer about twice their limit even with
+the recommended hedge (INR 80 and 73 lakh vs a 40 lakh limit on INR 10 crore); single historical crises sit
+beyond the simulation's 1-in-20 bad case.
