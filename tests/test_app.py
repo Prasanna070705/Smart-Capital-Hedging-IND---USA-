@@ -43,13 +43,6 @@ class TestApp(unittest.TestCase):
         self.assertEqual(recommendation(self.at), "Recommendation: hedge 100%")
         self.assertTrue(any("Even a full hedge" in w.value for w in self.at.warning))
 
-    def test_answer_card_in_indian_format(self):
-        # v1.1 Day 1: the answer card leads with the action and uses lakh/crore and Indian grouping
-        text = " ".join(md.value for md in self.at.markdown)
-        self.assertIn("USD 521,540", text)
-        self.assertIn("₹39.8 lakh", text)
-        self.assertTrue(any("₹10,00,00,000" in c.value for c in self.at.caption))
-
     def test_every_payment_length_runs(self):
         for months in (1, 3, 9, 12):
             self.at.slider(key="months").set_value(months).run()

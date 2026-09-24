@@ -1,11 +1,7 @@
-# v1.1 Day 1: app theme. Streamlit reads this automatically when you run `streamlit run app.py` from the root.
+# Streamlit settings for the hedging advisor
 [theme]
-base = "light"
-primaryColor = "#0F766E"               # deep teal: buttons, sliders, focus rings
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F1F5F4"   # sidebar and cards
-textColor = "#1F2933"
+primaryColor = "#1f6feb"     # buttons, sliders and links
 font = "sans serif"
 
-[client]
-toolbarMode = "minimal"                # hide developer menu items from buyers
+[browser]
+gatherUsageStats = false
