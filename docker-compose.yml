@@ -1,0 +1,11 @@
+# docker-compose.yml: optional shortcut.  docker compose up --build   then open http://localhost:8501
+services:
+  advisor:
+    build: .
+    image: fx-hedging:1.1
+    ports:
+      - "8501:8501"
+    env_file:
+      - path: .env          # holds CHAT_API_KEY; the app works offline if it's missing
+        required: false
+    restart: unless-stopped

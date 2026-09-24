@@ -1,0 +1,11 @@
+# Streamlit settings for the hedging advisor (v1.1 Day 7b: black and deep blue dark mode by default)
+[theme]
+base = "dark"
+primaryColor = "#4da3ff"               # buttons, sliders and links: bright blue
+backgroundColor = "#050b1a"            # behind the gradient, and inside charts and tables
+secondaryBackgroundColor = "#0f1c33"   # sidebar, inputs, cards
+textColor = "#e6eefc"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false

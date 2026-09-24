@@ -103,3 +103,17 @@ BACKTEST_FILE = OUTPUTS_DIR / "backtest_decisions.csv"
 BACKTEST_SUMMARY_FILE = OUTPUTS_DIR / "backtest_summary.csv"
 BACKTEST_START = "2012-01-01"   # first month with a matching-tenor forward (India 3-month rate starts 2011-11)
 BACKTEST_N_SIMS = 10_000         # per decision, same as the app
+
+
+# ---- Chatbot (v1.1, Day 5) ----
+# Any OpenAI-compatible chat API works. Default: Groq's free tier. Key goes in .env as CHAT_API_KEY=...
+CHAT_API_URL = "https://api.groq.com/openai/v1"
+CHAT_MODEL = "openai/gpt-oss-120b"       # free tier, supports tools; check the Models page and change if retired
+CHAT_TIMEOUT_S = 30                      # seconds to wait for an answer
+CHAT_STATUS_TIMEOUT_S = 4                # quick "are we online?" check when the app starts
+CHAT_MAX_TOOL_ROUNDS = 3                 # Day 6: how many times the model may run the hedge model per question
+DOCS_FOR_CHAT = [ROOT_DIR / "README.md"] # documents the chatbot retrieves from (plus the glossary)
+
+
+# ---- Look and feel (v1.1, Day 7b) ----
+DEFAULT_DARK_MODE = True         # the app opens in dark mode; the sidebar toggle switches to light

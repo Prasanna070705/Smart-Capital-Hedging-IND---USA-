@@ -3,12 +3,16 @@
 #   python -m unittest discover tests -v
 # Skipped automatically if Streamlit isn't installed.
 import unittest
+import os
 from pathlib import Path
 
 try:
     from streamlit.testing.v1 import AppTest
 except ImportError:
     AppTest = None
+
+# Test the app in offline mode, even if your .env has a chat key: an empty value set here wins over .env
+os.environ["CHAT_API_KEY"] = ""
 
 APP = str(Path(__file__).resolve().parent.parent / "app.py")
 
@@ -20,6 +24,13 @@ def recommendation(at):
 
 @unittest.skipIf(AppTest is None, "Streamlit not installed")
 class TestApp(unittest.TestCase):
+
+    def test_app_works_offline(self):
+        # No API key in the test run: the Ask tab must explain, and the recommendation must still appear
+        self.assertEqual(len(self.at.exception), 0)
+        self.assertTrue(any("Chat is off" in i.value for i in self.at.info))
+        self.assertEqual(recommendation(self.at), "Recommendation: hedge 50%")
+        
     def setUp(self):
         self.at = AppTest.from_file(APP, default_timeout=60).run()
 
