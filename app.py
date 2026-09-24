@@ -13,14 +13,17 @@ sys.path.insert(0, str(ROOT / "src"))
 from config import RISK_LEVELS
 from advisor import load_market, simulate_payment, scores_from_paths, budget_pct_from_inr, advise
 from formatting import rate
-from views import recommendation, track_record, about
+from views import recommendation, insights, track_record, about
+from views import recommendation, insights, track_record, about, ask
 
 STALE_AFTER_DAYS = 30   # warn when the market snapshot is older than this
 
 # Tabs in display order: (label, module with a render(ctx) function). Later days add entries here.
 TABS = [
     ("Recommendation", recommendation),
+    ("Insights", insights),
     ("Track record", track_record),
+    ("Ask", ask),
     ("How it works", about),
 ]
 
@@ -73,6 +76,8 @@ with st.sidebar:
                               help="Leave at 0 to use the risk tolerance above.")
         if own > 0:
             budget_pct = budget_pct_from_inr(own * 1e5, invoice_usd, m["spot"])
+    st.divider()
+    ask.sidebar_status()
 
 # ---------- Calculation (all finance comes from src/, cached) ----------
 forward, spot_end = payment_paths(months)
