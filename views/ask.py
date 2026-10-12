@@ -7,10 +7,21 @@ import chatbot
 from chat_tools import TOOLS, run_tool
 
 
+def _key():
+    """The key this visitor pasted, kept in their session only."""
+    return st.session_state.get("chat_key", "").strip()
+
+
 @st.cache_data(ttl=300, show_spinner=False)
+def _status(key):
+    # `key` is only here so each key gets its own cached answer
+    return chatbot.status()
+
+
 def chat_status():
     """(online, reason), rechecked at most every 5 minutes."""
-    return chatbot.status()
+    chatbot.use_key(_key())
+    return _status(_key())
 
 
 @st.cache_resource
@@ -27,8 +38,10 @@ def render(ctx):
     online, reason = chat_status()
     if not online:
         st.info(f"Chat is off. {reason} The hedge recommendation and all other tabs work normally without it.")
+        st.text_input("Chat API key", type="password", key="chat_key",
+                      help="Used only for your questions in this browser session. It is not saved on the server.")
         if st.button("Check again", key="chat_recheck"):
-            chat_status.clear()
+            _status.clear()
             st.rerun()
         return
 

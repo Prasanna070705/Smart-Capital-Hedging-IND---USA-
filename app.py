@@ -13,21 +13,21 @@ sys.path.insert(0, str(ROOT / "src"))
 from config import RISK_LEVELS
 from advisor import load_market, simulate_payment, scores_from_paths, budget_pct_from_inr, advise
 from formatting import rate
-from views import recommendation, insights, track_record, about, ask, theme
+from views import recommendation, insights, track_record, about, ask, glossary, chrome
 
 STALE_AFTER_DAYS = 30   # warn when the market snapshot is older than this
 
 # Tabs in display order: (label, module with a render(ctx) function). Later days add entries here.
 TABS = [
-    ("Recommendation", recommendation),
-    ("Insights", insights),
-    ("Track record", track_record),
-    ("Ask", ask),
-    ("How it works", about),
+    (":material/verified: Recommendation", recommendation),
+    (":material/insights: Insights", insights),
+    (":material/history: Track record", track_record),
+    (":material/chat: Ask", ask),
+    (":material/menu_book: How it works", about),
+    (":material/dictionary: Glossary", glossary),
 ]
 
-st.set_page_config(page_title="FX Hedging Advisor", page_icon="💱", layout="wide")
-theme.apply()          # Day 7b: dark (black and blue) by default, Dark mode toggle in the sidebar
+st.set_page_config(page_title="FX Hedging Advisor", page_icon=":material/currency_exchange:", layout="wide")
 
 
 # ---------- Cached loaders: the heavy work runs once, not on every click ----------
@@ -52,7 +52,8 @@ if age > STALE_AFTER_DAYS:
                "refresh it with `python src/run_all.py --fetch` before relying on the numbers.")
 
 with st.sidebar:
-    st.header("Your payment")
+    chrome.render()        # Light/Dark switch (top left), ambient background, ? links to the Glossary tab
+    st.header("Your payment", icon=":material/payments:")
     unit = st.radio("Enter the amount in", ["INR crore (at today's rate)", "USD"], key="unit")
     if unit == "USD":
         invoice_usd = st.number_input("Invoice amount (USD)", min_value=1_000.0, max_value=1e10,
@@ -64,7 +65,7 @@ with st.sidebar:
     months = st.slider("Months until payment", min_value=1, max_value=12, value=6, key="months",
                        help="For payments due in less than a month, use 1: the tool's shortest horizon.")
 
-    st.header("Your risk tolerance")
+    st.header("Your risk tolerance", icon=":material/shield:")
     level = st.select_slider("How much risk can you take?", options=list(RISK_LEVELS), value="Balanced",
                              key="risk_level",
                              help="Sets the largest extra cost you could absorb in a 1-in-20 bad case, "
@@ -76,7 +77,6 @@ with st.sidebar:
                               help="Leave at 0 to use the risk tolerance above.")
         if own > 0:
             budget_pct = budget_pct_from_inr(own * 1e5, invoice_usd, m["spot"])
-    st.divider()
     ask.sidebar_status()
 
 # ---------- Calculation (all finance comes from src/, cached) ----------

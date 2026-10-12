@@ -30,9 +30,9 @@ def cheapness(ctx):
     p = _premium()
     st.subheader(f"Is hedging cheap right now? {p['verdict'].capitalize()}.", help=tip("Forward premium"))
     c1, c2, c3 = st.columns(3)
-    c1.metric("Forward premium today", f"{p['today']:.2f}% a year")
-    c2.metric(f"Average since {p['since']}", f"{p['average']:.2f}% a year")
-    c3.metric("Cheaper than today", f"{p['percentile']:.0f}% of past days")
+    c1.metric("Forward premium today", f"{p['today']:.2f}% a year", border=True, height="stretch")
+    c2.metric(f"Average since {p['since']}", f"{p['average']:.2f}% a year", border=True, height="stretch")
+    c3.metric("Cheaper than today", f"{p['percentile']:.0f}% of past days", border=True, height="stretch")
     st.caption(f"Since {p['since']} the premium has ranged from {p['low']:.2f}% to {p['high']:.2f}% a year. "
                "It is set by the gap between Indian and US interest rates, so a narrow gap makes hedging cheap.")
 
@@ -78,11 +78,11 @@ def bank_quote(ctx):
     spread = (bank / ctx["forward"] - 1) * 100
     c1, c2, c3 = st.columns(3)
     c1.metric("Bank spread over the fair rate", f"{spread:+.2f}%", f"{bank - ctx['forward']:+.4f} ₹ per USD",
-              delta_color="off")
+              delta_color="off", border=True, height="stretch")
     c2.metric("Recommended hedge with this quote", f"{b['ratio']:.0%}", f"{(b['ratio'] - a['ratio']) * 100:+.0f} points",
-              delta_color="off")
+              delta_color="off", border=True, height="stretch")
     c3.metric("Locked-in cost of the hedge", inr_short(b["premium_inr"]),
-              f"{inr_short(b['premium_inr'] - a['premium_inr'])} vs fair rate", delta_color="off")
+              f"{inr_short(b['premium_inr'] - a['premium_inr'])} vs fair rate", delta_color="off", border=True, height="stretch")
     if not b["fits_budget"]:
         st.warning("With this quote even a full hedge costs more than your limit.")
 

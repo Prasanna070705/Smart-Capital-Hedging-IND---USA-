@@ -1,8 +1,7 @@
 # views/about.py
-# The How it works tab: method, limits and a glossary.
+# The How it works tab: method and limits. Terms are explained on the Glossary tab.
 import streamlit as st
 
-from glossary import GLOSSARY
 
 
 def render(ctx):
@@ -19,6 +18,4 @@ def render(ctx):
 - Data is a fixed snapshot from {m['as_of']}; interest rates carry a 2-month publication lag.
 - This is a model built on past data, not financial advice. Confirm with your bank before booking a forward.
 """)
-    st.subheader("Glossary")
-    for term, meaning in GLOSSARY.items():
-        st.markdown(f"**{term}:** {meaning}")
+    st.caption("Each term is explained in full on the Glossary tab.")

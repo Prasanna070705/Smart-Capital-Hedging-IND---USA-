@@ -113,7 +113,3 @@ CHAT_TIMEOUT_S = 30                      # seconds to wait for an answer
 CHAT_STATUS_TIMEOUT_S = 4                # quick "are we online?" check when the app starts
 CHAT_MAX_TOOL_ROUNDS = 3                 # Day 6: how many times the model may run the hedge model per question
 DOCS_FOR_CHAT = [ROOT_DIR / "README.md"] # documents the chatbot retrieves from (plus the glossary)
-
-
-# ---- Look and feel (v1.1, Day 7b) ----
-DEFAULT_DARK_MODE = True         # the app opens in dark mode; the sidebar toggle switches to light

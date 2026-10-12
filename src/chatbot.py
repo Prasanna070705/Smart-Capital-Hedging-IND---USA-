@@ -7,6 +7,7 @@
 #
 # Try it from the terminal:  python src/chatbot.py "Why is the recommendation 50%?"
 import json
+import contextvars
 import os
 import re
 import sys
@@ -36,20 +37,29 @@ Rules:
 
 # ---------- Connection ----------
 
+_session_key = contextvars.ContextVar("chat_session_key", default="")
+
+
+def use_key(key):
+    """Use this key for chat calls made by the current app session (views/ask.py sets it on every run).
+    Lets a public deployment run without a server-side key: only someone who has a key can chat."""
+    _session_key.set((key or "").strip())
+
+
 def api_key():
-    return os.getenv("CHAT_API_KEY", "").strip()
+    return _session_key.get() or os.getenv("CHAT_API_KEY", "").strip()
 
 
 def status(transport=None):
     """(online, reason). Online only if a key exists AND the provider answers quickly."""
     if not api_key():
-        return False, "No API key: add CHAT_API_KEY=... to the .env file to turn on the chatbot."
+        return False, "No API key: paste one below, or add CHAT_API_KEY=... to the .env file."
     try:
         (transport or _http)("GET", "/models", None, CHAT_STATUS_TIMEOUT_S)
         return True, f"Connected to {CHAT_API_URL.split('/')[2]} ({CHAT_MODEL})."
     except urllib.error.HTTPError as e:
         if e.code in (401, 403):
-            return False, "The API key was rejected. Check CHAT_API_KEY in .env."
+            return False, "The API key was rejected. Check the key you pasted, or CHAT_API_KEY in .env."
         return False, f"The chat service returned an error ({e.code})."
     except Exception:
         return False, "No internet connection (or the chat service is unreachable)."

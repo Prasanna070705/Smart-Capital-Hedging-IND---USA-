@@ -31,10 +31,14 @@ def outcome_histogram_chart(hist, var_lakh, limit_lakh):
              "encoding": {"x": {"field": "x", "type": "quantitative"},
                           "color": {"value": "#cf222e"},
                           "tooltip": [{"field": "label"}, {"field": "x", "title": "₹ lakh", "format": ".1f"}]}},
-            {"data": {"values": rules.to_dict("records")},
-             "mark": {"type": "text", "angle": 270, "dx": -8, "align": "left", "baseline": "bottom"},
-             "encoding": {"x": {"field": "x", "type": "quantitative"}, "y": {"value": 5},
-                          "text": {"field": "label"}}},
+            # Labels sit either side of their lines (the limit is never left of the hedged worst case), in the
+            # rule's red so they read on both the light and the dark theme
+            *[{"data": {"values": [rules.to_dict("records")[i]]},
+               "mark": {"type": "text", "align": align, "dx": dx, "baseline": "top", "fontWeight": 600,
+                        "color": "#cf222e"},
+               "encoding": {"x": {"field": "x", "type": "quantitative"}, "y": {"value": 4},
+                            "text": {"field": "label"}}}
+              for i, align, dx in [(0, "left", 6), (1, "right", -6)]],
         ],
     }
     return data, spec

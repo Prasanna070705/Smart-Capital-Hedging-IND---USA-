@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from formatting import indian_group, inr, inr_short, usd, rate
-from glossary import GLOSSARY, tip
+from glossary import GLOSSARY, DETAILS, slug, tip
 
 
 class TestFormatting(unittest.TestCase):
@@ -33,6 +33,11 @@ class TestFormatting(unittest.TestCase):
         self.assertIn("VaR 95%", GLOSSARY)
         self.assertEqual(tip("not a term"), "")
         self.assertTrue(all(len(v) > 20 for v in GLOSSARY.values()))
+        # Glossary tab: every term has a full explanation, and the tooltip leads with the bold term
+        # that views/chrome.py turns into the page anchor
+        self.assertEqual(set(DETAILS), set(GLOSSARY))
+        self.assertTrue(tip("VaR 95%").startswith("**VaR 95%:**"))
+        self.assertEqual(slug("VaR 95%"), "glossary-var-95")
 
 
 if __name__ == "__main__":

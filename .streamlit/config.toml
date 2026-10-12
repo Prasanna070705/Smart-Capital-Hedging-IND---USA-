@@ -1,11 +1,24 @@
-# Streamlit settings for the hedging advisor (v1.1 Day 7b: black and deep blue dark mode by default)
+# Streamlit settings for the hedging advisor. Colours live here, not in CSS. The app follows the visitor's
+# system light/dark setting; the app menu (Settings) switches between the two.
 [theme]
-base = "dark"
-primaryColor = "#4da3ff"               # buttons, sliders and links: bright blue
-backgroundColor = "#050b1a"            # behind the gradient, and inside charts and tables
+baseRadius = "medium"
+
+[theme.dark]
+primaryColor = "#1f6feb"               # buttons, sliders: blue dark enough for white button text
+linkColor = "#4da3ff"
+backgroundColor = "#050b1a"            # black and deep blue
 secondaryBackgroundColor = "#0f1c33"   # sidebar, inputs, cards
 textColor = "#e6eefc"
-font = "sans serif"
+borderColor = "#22365c"
+chartCategoricalColors = ["#4da3ff", "#f0b429", "#3fb950", "#db61a2", "#a371f7", "#8b949e"]
+
+[theme.light]
+primaryColor = "#1f6feb"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f6fb"
+textColor = "#0b1a33"
+borderColor = "#d0d9e8"
+chartCategoricalColors = ["#1f6feb", "#bf8700", "#1a7f37", "#bf3989", "#8250df", "#57606a"]
 
 [browser]
 gatherUsageStats = false
